@@ -1,10 +1,14 @@
 mod model;
+mod error;
+mod config;
 
-use std::error::Error;
 use std::env::args;
-use std::io::{self, Write};
+use std::io;
 
-use crate::model::{PlainMessage, UserConfig, MessageDirection};
+use anyhow::Result;
+
+use crate::model::{UserConfig};
+use crate::config::load_or_init_config;
 
 
 enum Mode {
@@ -12,65 +16,73 @@ enum Mode {
     Client,
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
-    run()?;
-    Ok(())
+fn main() -> Result<()> {
+    run()
 }
 
-fn run() -> Result<(), Box<dyn Error>> {
+fn run() -> Result<()> {
     let mut app_args = args().skip(1);
-    
+
     let mode = match app_args.next().as_deref() {
-        Some("server") => "server",
-        Some("client") => "client",
-        _ => {
+        Some("server") => Mode::Server,
+        Some("client") => Mode::Client,
+        Some(other) => {
+            eprintln!("Unknown mode: {other}");
+            eprintln!("Usage: encrypted-messenger <server|client>");
+            std::process::exit(1);
+        }
+        None => {
             eprintln!("Usage: encrypted-messenger <server|client>");
             std::process::exit(1);
         }
     };
 
+    let cfg = load_or_init_config()?;
+
     match mode {
-        "server" => {
+        Mode::Server => {
             println!("Running in server mode ...");
+            run_server(&cfg)?
         }
-        "client" => {
+       Mode::Client => {
             println!("Running in client mode ...");
-            run_client()?
-        }
-        _ => unreachable!(),
+            run_client(&cfg)?
+        },
     };
 
     Ok(())
 }
 
-fn run_client() -> Result<(), Box<dyn Error>> {
-    println!("Enter your username:");
-    let mut username = String::new();
-    io::stdin().read_line(&mut username)?;
-    let username = username.trim().to_string();
-
+fn run_client(cfg: &UserConfig) -> Result<()> {
+    println!("Welcome back: {}", cfg.username);
+    
     println!("Enter peer username:");
     let mut peer = String::new();
     io::stdin().read_line(&mut peer)?;
     let peer = peer.trim().to_string();
 
-    loop {
-        print!("> ");
-        io::stdout().flush()?;
+    // loop {
+    //     print!("> ");
+    //     io::stdout().flush()?;
 
-        let mut line = String::new();
-        io::stdin().read_line(&mut line)?;
-        let body = line.trim().to_string();
+    //     let mut line = String::new();
+    //     io::stdin().read_line(&mut line)?;
+    //     let body = line.trim().to_string();
 
-        if body.is_empty() { continue; }
+    //     if body.is_empty() { continue; }
 
-        let msg = PlainMessage {
-            from: username.clone(),
-            to: peer.clone(),
-            body,
-            direction: MessageDirection::Outgoing,
-        };
+    //     let msg = PlainMessage {
+    //         from: username.clone(),
+    //         to: peer.clone(),
+    //         body,
+    //         direction: MessageDirection::Outgoing,
+    //     };
 
-        println!("Constructed message: {:?}", msg);
-    }
+    //     println!("Constructed message: {:?}", msg);
+    // }
+    Ok(())
+}
+
+fn run_server(cfg: &UserConfig) -> Result<()> {
+    Ok(())
 }

@@ -1,11 +1,12 @@
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct UserConfig {
     pub username: String,
-    // pub key_id: String,
+    pub private_key_path: String,
+    pub public_key_path: String
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Peer {
     pub name: String,
     pub key_id: String,
