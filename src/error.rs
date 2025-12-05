@@ -12,6 +12,9 @@ pub enum AppError {
     #[error("Config file missing username")]
     MissingUsername,
 
+    #[error("Decode error: {0}")]
+    Decode(#[from] base64::DecodeError),
+
     #[error("Home directory not found")]
     HomeNotFound
 }
